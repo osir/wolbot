@@ -6,6 +6,7 @@ import logging
 import re
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import version
 import config
 import wol
 
@@ -20,7 +21,7 @@ machines = {}
 
 def cmd_help(bot, update):
     help_message = """
-    (*≧▽≦) WOLBOT (≧▽≦*)
+    (*≧▽≦) WOLBOT v{v} (≧▽≦*)
 
     /help
         Display this help
@@ -42,7 +43,7 @@ def cmd_help(bot, update):
 
     Names may only contain a-z, 0-9 and _
     Mac addresses can use any or no separator
-    """
+    """.format(v=version.V)
     update.message.reply_text(help_message)
 
 
