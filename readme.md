@@ -2,12 +2,11 @@
 
 Simple Wake-on-Lan Telegram bot
 
-## Requirements
-
+## 彡ﾟ◉ω◉ )つー☆ﾟ.*･Requirements｡ﾟ'
 - python-telegram-bot
 - Virtualenv (recommended)
 
-## Installation
+## 彡ﾟ◉ω◉ )つー☆ﾟ.*･Installation｡ﾟ'
 
 Clone the repository
 ```
