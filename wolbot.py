@@ -47,6 +47,8 @@ def cmd_help(bot, update):
 
 
 def cmd_wake(bot, update, **kwargs):
+    if not authorize(bot, update):
+        return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a name')
         return
@@ -60,6 +62,8 @@ def cmd_wake(bot, update, **kwargs):
 
 
 def cmd_wake_mac(bot, update, **kwargs):
+    if not authorize(bot, update):
+        return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a mac address')
         return
@@ -69,6 +73,8 @@ def cmd_wake_mac(bot, update, **kwargs):
 
 
 def cmd_list(bot, update):
+    if not authorize(bot, update):
+        return
     msg = '{num} Stored Machines:\n'.format(num=len(machines))
     for name, addr in machines.items():
         msg += '{n}: {a}\n'.format(n=name, a=addr)
@@ -76,6 +82,8 @@ def cmd_list(bot, update):
 
 
 def cmd_add(bot, update, **kwargs):
+    if not authorize(bot, update):
+        return
     if 'args' not in kwargs or len(kwargs['args']) < 2:
         update.message.reply_text('Please supply a name and mac address')
         return
@@ -83,7 +91,7 @@ def cmd_add(bot, update, **kwargs):
     machine_name = kwargs['args'][0]
     addr = kwargs['args'][1]
     if machine_name in machines:
-        update.message.reply_text('Name already in list')
+        update.message.reply_text('Name already added')
         return
 
     if not is_valid_name(machine_name):
@@ -106,6 +114,8 @@ def cmd_add(bot, update, **kwargs):
 
 
 def cmd_remove(bot, update, **kwargs):
+    if not authorize(bot, update):
+        return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a name')
         return
@@ -127,7 +137,7 @@ def cmd_remove(bot, update, **kwargs):
 # Other Functions
 ##
 
-def error(but, update, error):
+def error(bot, update, error):
     logger.warning('Update "{u}" caused error "{e}"'.format(u=update, e=error))
 
 
@@ -139,6 +149,18 @@ def send_magic_packet(bot, update, mac_address, display_name):
         return
     poke = 'Sending magic packets...\n 彡ﾟ◉ω◉ )つー☆ﾟ.*･{name}｡ﾟ'
     update.message.reply_text(poke.format(name=display_name))
+
+
+def user_is_allowed(uid):
+    return str(uid) in config.ALLOWED_USERS
+
+
+def authorize(bot, update):
+    if not user_is_allowed(update.message.from_user.id):
+        update.message.reply_text('You are not authorized to use this bot.\n' +
+                'To set up your own visit https://github.com/os-sc/wolbot')
+        return False
+    return True
 
 
 def is_valid_name(name):
