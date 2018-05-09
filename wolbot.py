@@ -10,7 +10,8 @@ import version
 import config
 import wol
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+logging.basicConfig(
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
 logger = logging.getLogger(__name__)
 machines = {}
@@ -148,7 +149,7 @@ def send_magic_packet(bot, update, mac_address, display_name):
     except ValueError as e:
         update.message.reply_text(str(e))
         return
-    poke = 'Sending magic packets...\n 彡ﾟ◉ω◉ )つー☆ﾟ.*･{name}｡ﾟ'
+    poke = 'Sending magic packets...\n 彡ﾟ◉ω◉ )つー☆ﾟ. {name}'
     update.message.reply_text(poke.format(name=display_name))
 
 
@@ -172,7 +173,8 @@ def is_valid_name(name):
 def normalize_mac_address(addr):
     if len(addr) == 12:
         pass
-        return config.MAC_ADDR_SEPARATOR.join(addr[i:i+2] for i in range(0,12,2))
+        return config.MAC_ADDR_SEPARATOR.join(
+                addr[i:i+2] for i in range(0,12,2))
     elif len(addr) == 12 + 5:
         sep = addr[2]
         return addr.replace(sep, config.MAC_ADDR_SEPARATOR)
