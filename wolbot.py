@@ -5,16 +5,31 @@ import os.path
 import logging
 import re
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import (InlineKeyboardButton,
+        InlineKeyboardMarkup)
+from telegram.ext import (Updater,
+        CommandHandler,
+        MessageHandler,
+        Filters)
 import version
 import config
 import wol
+
+STORAGE_FILE_VERSION = '2.0'
 
 logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
 logger = logging.getLogger(__name__)
-machines = {}
+machines = []
+
+
+class Machine:
+    def __init__(self, mid, name, addr):
+        self.id = mid
+        self.name = name,
+        self.addr = addr
+
 
 ##
 # Command Handlers
@@ -49,50 +64,61 @@ def cmd_help(bot, update):
 
 
 def cmd_wake(bot, update, **kwargs):
+    # Check correctness of call
     if not authorize(bot, update):
         return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a name')
         return
 
+    # Parse arguments and send WoL packets
     machine_name = kwargs['args'][0]
-    if not machine_name in machines:
-        update.message.reply_text('Could not find ' + machine_name)
-    else:
-        addr = machines[machine_name]
-        send_magic_packet(bot, update, addr, machine_name)
+    for m in machines.items():
+        if m.name == machine_name:
+            send_magic_packet(bot, update, m.addr, m.name)
+            return
+    update.message.reply_text('Could not find ' + machine_name)
 
 
 def cmd_wake_mac(bot, update, **kwargs):
+    # Check correctness of call
     if not authorize(bot, update):
         return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a mac address')
         return
 
+    # Parse arguments and send WoL packets
     mac_address = kwargs['args'][0]
     send_magic_packet(bot, update, mac_address, mac_address)
 
 
 def cmd_list(bot, update):
+    # Check correctness of call
     if not authorize(bot, update):
         return
+
+    # Print all stored machines
     msg = '{num} Stored Machines:\n'.format(num=len(machines))
-    for name, addr in machines.items():
-        msg += '{n}: {a}\n'.format(n=name, a=addr)
+    for m in machines.items():
+        msg += '{i}) {n}: {a}\n'.format(i=m.id, n=m.name, a=m.addr)
     update.message.reply_text(msg)
 
 
 def cmd_add(bot, update, **kwargs):
+    # Check correctness of call
     if not authorize(bot, update):
         return
     if 'args' not in kwargs or len(kwargs['args']) < 2:
         update.message.reply_text('Please supply a name and mac address')
         return
 
+    # Parse arguments
     machine_name = kwargs['args'][0]
     addr = kwargs['args'][1]
-    if machine_name in machines:
+
+    # Validate and normalize arguments
+    if any(m.name == machine_name for m in machines):
         update.message.reply_text('Name already added')
         return
 
@@ -106,32 +132,40 @@ def cmd_add(bot, update, **kwargs):
         update.message.reply_text(str(e))
         return
 
-    machines[machine_name] = addr
+    # Add machine to list
+    machines.append(Machine(get_highest_id()+1, machine_name, addr))
     update.message.reply_text('Added new machine')
 
+    # Save list
     try:
-        write_to_disk()
+        write_savefile(config.STORAGE_PATH)
     except:
         update.message.reply_text('Could not write changes to disk')
 
 
 def cmd_remove(bot, update, **kwargs):
+    # Check correctness of call
     if not authorize(bot, update):
         return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
         update.message.reply_text('Please supply a name')
         return
 
+    # Parse arguments and look for machine to be deleted
     machine_name = kwargs['args'][0]
-    if not machine_name in machines:
+    if not any(m.name == machine_name for m in machines):
         update.message.reply_text('Could not find ' + machine_name)
         return
 
-    del machines[machine_name]
-    update.message.reply_text('Removed machine')
+    # Delete machine
+    for i, m in enumerate(machines):
+        if m.name == machine_name:
+            del machines[i]
+            update.message.reply_text('Removed machine ' + machine_name)
 
+    # Save list
     try:
-        write_to_disk()
+        write_savefile(config.STORAGE_PATH)
     except:
         update.message.reply_text('Could not write changes to disk')
 
@@ -182,27 +216,45 @@ def normalize_mac_address(addr):
         raise ValueError('Incorrect MAC address format')
 
 
-def write_to_disk():
+def get_highest_id():
+    highest = -1
+    for m in machines:
+        if m.id > highest:
+            highest = m.id
+    return highest
+
+
+def write_savefile(path):
     csv=''
+    # Add meta settings
+    csv += '$VERSION={v}'.format(v=STORAGE_FILE_VERSION)
+
+    # Add data
     for name, addr in machines.items():
         csv += '{n};{a}\n'.format(n=name, a=addr)
 
-    with open(config.STORAGE_PATH, 'w') as f:
+    with open(path, 'w') as f:
         f.write(csv)
 
 
-def read_from_disk():
+def read_savefile(path):
     # Warning: file contents will not be validated
-    if not os.path.isfile(config.STORAGE_PATH):
+    if not os.path.isfile(path):
         return
-    with open(config.STORAGE_PATH, 'r') as f:
+    with open(path, 'r') as f:
         for i, line in enumerate(f):
-            name, addr = line.split(';', 1)
-            machines[name] = addr.strip()
+            # Handle Settings
+            if line.startswith('$VERSION'):
+                _, value = line.split('=', 1)
+                if not value.strip() == STORAGE_FILE_VERSION:
+                    raise ValueError('Incompatible storage file version')
+
+            mid, name, addr = line.split(';', 2)
+            machines[mid] = Machine(mid, name, addr.strip())
 
 
 def main():
-    read_from_disk()
+    read_savefile(config.STORAGE_PATH)
 
     # Set up updater
     updater = Updater(config.TOKEN)
