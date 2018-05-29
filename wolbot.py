@@ -27,7 +27,7 @@ machines = []
 class Machine:
     def __init__(self, mid, name, addr):
         self.id = mid
-        self.name = name,
+        self.name = name
         self.addr = addr
 
 
@@ -36,6 +36,7 @@ class Machine:
 ##
 
 def cmd_help(bot, update):
+    logger.info('Command /help was called')
     help_message = """
     (*≧▽≦) WOLBOT v{v} (≧▽≦*)
 
@@ -64,6 +65,7 @@ def cmd_help(bot, update):
 
 
 def cmd_wake(bot, update, **kwargs):
+    logger.info('Command /wake was called')
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -73,7 +75,7 @@ def cmd_wake(bot, update, **kwargs):
 
     # Parse arguments and send WoL packets
     machine_name = kwargs['args'][0]
-    for m in machines.items():
+    for m in machines:
         if m.name == machine_name:
             send_magic_packet(bot, update, m.addr, m.name)
             return
@@ -81,6 +83,7 @@ def cmd_wake(bot, update, **kwargs):
 
 
 def cmd_wake_mac(bot, update, **kwargs):
+    logger.info('Command /wakemac was called')
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -94,18 +97,20 @@ def cmd_wake_mac(bot, update, **kwargs):
 
 
 def cmd_list(bot, update):
+    logger.info('Command /list was called')
     # Check correctness of call
     if not authorize(bot, update):
         return
 
     # Print all stored machines
     msg = '{num} Stored Machines:\n'.format(num=len(machines))
-    for m in machines.items():
-        msg += '{i}) {n}: {a}\n'.format(i=m.id, n=m.name, a=m.addr)
+    for m in machines:
+        msg += '#{i}: "{n}" → {a}\n'.format(i=m.id, n=m.name, a=m.addr)
     update.message.reply_text(msg)
 
 
 def cmd_add(bot, update, **kwargs):
+    logger.info('Command /add was called')
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -144,6 +149,7 @@ def cmd_add(bot, update, **kwargs):
 
 
 def cmd_remove(bot, update, **kwargs):
+    logger.info('Command /remove was called')
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -193,8 +199,12 @@ def user_is_allowed(uid):
 
 def authorize(bot, update):
     if not user_is_allowed(update.message.from_user.id):
-        update.message.reply_text('You are not authorized to use this bot.\n' +
-                'To set up your own visit https://github.com/os-sc/wolbot')
+        logger.warning('Unknown User {fn} {ln} [{i}] tried to call bot.'.format(
+            fn=update.message.from_user.first_name,
+            ln=update.message.from_user.last_name,
+            i=update.message.from_user.id))
+        update.message.reply_text('You are not authorized to use this bot.\n'
+                + 'To set up your own visit https://github.com/os-sc/wolbot')
         return False
     return True
 
@@ -225,19 +235,21 @@ def get_highest_id():
 
 
 def write_savefile(path):
+    logger.info('Writing stored machines to "{p}"'.format(p=path))
     csv=''
     # Add meta settings
-    csv += '$VERSION={v}'.format(v=STORAGE_FILE_VERSION)
+    csv += '$VERSION={v}\n'.format(v=STORAGE_FILE_VERSION)
 
     # Add data
-    for name, addr in machines.items():
-        csv += '{n};{a}\n'.format(n=name, a=addr)
+    for m in machines:
+        csv += '{i};{n};{a}\n'.format(i=m.id, n=m.name, a=m.addr)
 
     with open(path, 'w') as f:
         f.write(csv)
 
 
 def read_savefile(path):
+    logger.info('Reading stored machines from "{p}"'.format(p=path))
     # Warning: file contents will not be validated
     if not os.path.isfile(path):
         return
@@ -248,12 +260,13 @@ def read_savefile(path):
                 _, value = line.split('=', 1)
                 if not value.strip() == STORAGE_FILE_VERSION:
                     raise ValueError('Incompatible storage file version')
-
-            mid, name, addr = line.split(';', 2)
-            machines[mid] = Machine(mid, name, addr.strip())
+            else:
+                mid, name, addr = line.split(';', 2)
+                machines.append(Machine(int(mid), name, addr.strip()))
 
 
 def main():
+    logger.info('Starting bot version {v}'.format(v=version.V))
     read_savefile(config.STORAGE_PATH)
 
     # Set up updater
