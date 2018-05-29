@@ -15,6 +15,7 @@ import version
 import config
 import wol
 
+# Compatible storage file version with this code
 STORAGE_FILE_VERSION = '2.0'
 
 logging.basicConfig(
@@ -36,7 +37,7 @@ class Machine:
 ##
 
 def cmd_help(bot, update):
-    logger.info('Command /help was called')
+    log_call(update)
     help_message = """
     (*≧▽≦) WOLBOT v{v} (≧▽≦*)
 
@@ -65,7 +66,7 @@ def cmd_help(bot, update):
 
 
 def cmd_wake(bot, update, **kwargs):
-    logger.info('Command /wake was called')
+    log_call(update)
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -83,7 +84,7 @@ def cmd_wake(bot, update, **kwargs):
 
 
 def cmd_wake_mac(bot, update, **kwargs):
-    logger.info('Command /wakemac was called')
+    log_call(update)
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -97,7 +98,7 @@ def cmd_wake_mac(bot, update, **kwargs):
 
 
 def cmd_list(bot, update):
-    logger.info('Command /list was called')
+    log_call(update)
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -110,7 +111,7 @@ def cmd_list(bot, update):
 
 
 def cmd_add(bot, update, **kwargs):
-    logger.info('Command /add was called')
+    log_call(update)
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -149,7 +150,7 @@ def cmd_add(bot, update, **kwargs):
 
 
 def cmd_remove(bot, update, **kwargs):
-    logger.info('Command /remove was called')
+    log_call(update)
     # Check correctness of call
     if not authorize(bot, update):
         return
@@ -183,6 +184,17 @@ def error(bot, update, error):
     logger.warning('Update "{u}" caused error "{e}"'.format(u=update, e=error))
 
 
+def log_call(update):
+    uid = update.message.from_user.id
+    cmd = update.message.text.split(' ', 1)
+    if len(cmd) > 1:
+        logger.info('User [{u}] invoked command {c} with arguments [{a}]'
+                .format(c=cmd[0], a=cmd[1], u=uid))
+    else:
+        logger.info('User [{u}] invoked command {c}'
+                .format(c=cmd[0], u=uid))
+
+
 def send_magic_packet(bot, update, mac_address, display_name):
     try:
         wol.wake(mac_address)
@@ -199,10 +211,10 @@ def user_is_allowed(uid):
 
 def authorize(bot, update):
     if not user_is_allowed(update.message.from_user.id):
-        logger.warning('Unknown User {fn} {ln} [{i}] tried to call bot.'.format(
-            fn=update.message.from_user.first_name,
-            ln=update.message.from_user.last_name,
-            i=update.message.from_user.id))
+        logger.warning('Unknown User {fn} {ln} [{i}] tried to call bot'.format(
+                fn=update.message.from_user.first_name,
+                ln=update.message.from_user.last_name,
+                i=update.message.from_user.id))
         update.message.reply_text('You are not authorized to use this bot.\n'
                 + 'To set up your own visit https://github.com/os-sc/wolbot')
         return False
