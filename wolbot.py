@@ -10,7 +10,8 @@ from telegram import (InlineKeyboardButton,
 from telegram.ext import (Updater,
         CommandHandler,
         MessageHandler,
-        Filters)
+        Filters,
+        CallbackQueryHandler)
 import version
 import config
 import wol
@@ -71,7 +72,10 @@ def cmd_wake(bot, update, **kwargs):
     if not authorize(bot, update):
         return
     if 'args' not in kwargs or len(kwargs['args']) < 1:
-        update.message.reply_text('Please supply a name')
+        if not len(machines):
+            update.message.reply_text('Please add a machine with the /add command first!')
+        markup = InlineKeyboardMarkup(generate_machine_keyboard(machines))
+        update.message.reply_text('Please select a machine to wake:', reply_markup=markup)
         return
 
     # Parse arguments and send WoL packets
@@ -81,6 +85,17 @@ def cmd_wake(bot, update, **kwargs):
             send_magic_packet(bot, update, m.addr, m.name)
             return
     update.message.reply_text('Could not find ' + machine_name)
+
+
+def cmd_wake_keyboard_handler(bot, update):
+    try:
+        n = int(update.callback_query.data)
+    except ValueError:
+        pass
+    matches = [m for m in machines if m.id == n]
+    if len(matches) < 1:
+        return
+    send_magic_packet(bot, update, matches[0].addr, matches[0].name)
 
 
 def cmd_wake_mac(bot, update, **kwargs):
@@ -201,8 +216,21 @@ def send_magic_packet(bot, update, mac_address, display_name):
     except ValueError as e:
         update.message.reply_text(str(e))
         return
-    poke = 'Sending magic packets...\n 彡ﾟ◉ω◉ )つー☆ﾟ. {name}'
-    update.message.reply_text(poke.format(name=display_name))
+    poke = 'Sending magic packets...\n 彡ﾟ◉ω◉ )つー☆ﾟ. {name}'.format(
+            name=display_name)
+
+    if update.callback_query:
+        update.callback_query.edit_message_text(poke)
+    else:
+        update.message.reply_text(poke)
+
+
+def generate_machine_keyboard(machines):
+    kbd = []
+    for m in machines:
+        btn = InlineKeyboardButton(m.name, callback_data=m.id)
+        kbd.append([btn])
+    return kbd
 
 
 def user_is_allowed(uid):
@@ -289,6 +317,7 @@ def main():
     disp.add_handler(CommandHandler('help',    cmd_help))
     disp.add_handler(CommandHandler('list',    cmd_list))
     disp.add_handler(CommandHandler('wake',    cmd_wake,     pass_args=True))
+    disp.add_handler(CallbackQueryHandler(cmd_wake_keyboard_handler))
     disp.add_handler(CommandHandler('wakemac', cmd_wake_mac, pass_args=True))
     disp.add_handler(CommandHandler('add',     cmd_add,      pass_args=True))
     disp.add_handler(CommandHandler('remove',  cmd_remove,   pass_args=True))
