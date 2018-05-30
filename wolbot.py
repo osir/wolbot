@@ -40,28 +40,29 @@ class Machine:
 def cmd_help(bot, update):
     log_call(update)
     help_message = """
-    (*≧▽≦) WOLBOT v{v} (≧▽≦*)
+(*≧▽≦) WOLBOT v{v} (≧▽≦*)
 
-    /help
-        Display this help
+/help
+    Display this help
 
-    /wake <name>
-        Wake saved machine with name
+/wake [name]
+    Wake saved machine with name
+    If no name is supplied, a selection menu will be shown
 
-    /wakemac <mac>
-        Wake machine with mac address
+/wakemac <mac>
+    Wake machine with mac address
 
-    /list
-        List all saved machines
+/list
+    List all saved machines
 
-    /add <name> <mac>
-        Add a machine
+/add <name> <mac>
+    Add a machine
 
-    /remove <name>
-        Remove a machine
+/remove <name>
+    Remove a machine
 
-    Names may only contain a-z, 0-9 and _
-    Mac addresses can use any or no separator
+Names may only contain a-z, 0-9 and _
+Mac addresses can use any or no separator
     """.format(v=version.V)
     update.message.reply_text(help_message)
 
