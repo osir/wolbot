@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1
+
+- If `/wake` is called and there is only one machine stored in the machine list
+    that one will automatically be selected
+
 ## 2.0
 
 - The bot now displays a selection menu when no argument to `/wake` is provided
