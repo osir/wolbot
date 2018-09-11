@@ -72,7 +72,9 @@ def cmd_wake(bot, update, **kwargs):
     # Check correctness of call
     if not authorize(bot, update):
         return
-    if 'args' not in kwargs or len(kwargs['args']) < 1:
+
+    # When no args are supplied
+    if 'args' not in kwargs or len(kwargs['args']) < 1 and len(machines) != 1:
         if not len(machines):
             update.message.reply_text('Please add a machine with the /add command first!')
         markup = InlineKeyboardMarkup(generate_machine_keyboard(machines))
@@ -80,7 +82,10 @@ def cmd_wake(bot, update, **kwargs):
         return
 
     # Parse arguments and send WoL packets
-    machine_name = kwargs['args'][0]
+    if len(machines) == 1:
+        machine_name = machines[0]
+    else:
+        machine_name = kwargs['args'][0]
     for m in machines:
         if m.name == machine_name:
             send_magic_packet(bot, update, m.addr, m.name)
