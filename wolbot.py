@@ -12,6 +12,7 @@ from telegram.ext import (Updater,
         MessageHandler,
         Filters,
         CallbackQueryHandler)
+import requests
 import version
 import config
 import wol
@@ -60,6 +61,9 @@ def cmd_help(bot, update):
 
 /remove <name>
     Remove a machine
+
+/ip
+    Get the public IP address of the network Wolbot is in
 
 Names may only contain a-z, 0-9 and _
 Mac addresses can use any or no separator
@@ -197,6 +201,28 @@ def cmd_remove(bot, update, **kwargs):
     except:
         update.message.reply_text('Could not write changes to disk')
 
+
+def cmd_ip(bot, update):
+    log_call(update)
+    # Check correctness of call
+    if not authorize(bot, update):
+        return
+    config.IP_WEBSERVICE = 'https://ipv4.icanhazip.com'
+    config.IP_REGEX = '([0-9]{1,3}\.){3}[0-9]'
+
+    try:
+        # Get IP from webservice
+        r = Request.get(config.IP_WEBSERVICE)
+        # Extract IP using regex
+        pattern = regex.compile(config.IP_REGEX)
+        match = pattern.search(r.text)
+        if not match:
+            raise RuntimeError('Could not find IP in webpage response')
+        update.message.reply_text(match.group)
+    except RuntimeError as e:
+        update.message.reply_text('Error: ' + e.msg)
+
+
 ##
 # Other Functions
 ##
@@ -322,6 +348,7 @@ def main():
     # Add handlers
     disp.add_handler(CommandHandler('help',    cmd_help))
     disp.add_handler(CommandHandler('list',    cmd_list))
+    disp.add_handler(CommandHandler('ip',      cmd_ip))
     disp.add_handler(CommandHandler('wake',    cmd_wake,     pass_args=True))
     disp.add_handler(CallbackQueryHandler(cmd_wake_keyboard_handler))
     disp.add_handler(CommandHandler('wakemac', cmd_wake_mac, pass_args=True))
