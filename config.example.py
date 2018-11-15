@@ -11,3 +11,9 @@ STORAGE_PATH='/opt/wolbot/mac-addresses.csv'
 # Separator to use when printing addresses
 MAC_ADDR_SEPARATOR='-'
 
+# The webservice to call to get the bot's public IP
+IP_WEBSERVICE='https://ipv4.icanhazip.com/'
+
+# The Regex used to find the IP in the webservice response
+IP_REGEX='([0-9]{1-3}\.){3}[0-9]{1,3}'
+

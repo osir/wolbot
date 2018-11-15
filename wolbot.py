@@ -207,20 +207,19 @@ def cmd_ip(bot, update):
     # Check correctness of call
     if not authorize(bot, update):
         return
-    config.IP_WEBSERVICE = 'https://ipv4.icanhazip.com'
-    config.IP_REGEX = '([0-9]{1,3}\.){3}[0-9]'
 
     try:
         # Get IP from webservice
-        r = Request.get(config.IP_WEBSERVICE)
+        r = requests.get(config.IP_WEBSERVICE)
         # Extract IP using regex
-        pattern = regex.compile(config.IP_REGEX)
-        match = pattern.search(r.text)
+        pattern = re.compile(config.IP_REGEX)
+        match   = pattern.search(r.text)
+
         if not match:
             raise RuntimeError('Could not find IP in webpage response')
-        update.message.reply_text(match.group)
+        update.message.reply_text(match.group())
     except RuntimeError as e:
-        update.message.reply_text('Error: ' + e.msg)
+        update.message.reply_text('Error: ' + str(e))
 
 
 ##
