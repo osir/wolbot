@@ -15,5 +15,5 @@ MAC_ADDR_SEPARATOR='-'
 IP_WEBSERVICE='https://ipv4.icanhazip.com/'
 
 # The Regex used to find the IP in the webservice response
-IP_REGEX='([0-9]{1-3}\.){3}[0-9]{1,3}'
+IP_REGEX='([0-9]{1,3}\.){3}[0-9]{1,3}'
 
