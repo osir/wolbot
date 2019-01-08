@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2
+
+- Added the `/ip` command
+- Added config entries for `/ip` command: `IP_WEBSERVICE`, `IP_REGEX`
+
 ## 2.1
 
 - If `/wake` is called and there is only one machine stored in the machine list
