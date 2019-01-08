@@ -1,19 +1,19 @@
-# ( ≧▽≦) WOLBOT (≧▽≦ )
+# WOLBOT
 
 Simple Wake-on-Lan Telegram bot
 
 ![chat example](images/chat.jpg)
 
-## 彡ﾟ◉ω◉ )つー☆ﾟ.*･Commands｡ﾟ'
+## Commands
 
 > See `/help` for a list of available commands
 
-## 彡ﾟ◉ω◉ )つー☆ﾟ.*･Requirements｡ﾟ'
+## Requirements
 - python 3
 - python-telegram-bot
 - Virtualenv (recommended)
 
-## 彡ﾟ◉ω◉ )つー☆ﾟ.*･Installation｡ﾟ'
+## Installation
 
 Clone the repository
 ```
@@ -39,5 +39,12 @@ $ source wolbot_venv/bin/activate
 Start the application
 ```
 (venv)$ python3 wolbot.py
+```
+
+### Autostart on Raspberry Pi
+
+The easiest way is to add the launcher script to `/etc/rc.local`.
+```
+/opt/wolbot/wolbot-launcher.sh
 ```
 
