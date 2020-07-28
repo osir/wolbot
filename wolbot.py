@@ -87,7 +87,7 @@ def cmd_wake(bot, update, **kwargs):
 
     # Parse arguments and send WoL packets
     if len(machines) == 1:
-        machine_name = machines[0]
+        machine_name = machines[0].name
     else:
         machine_name = kwargs['args'][0]
     for m in machines:
